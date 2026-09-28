@@ -39,16 +39,24 @@ or `vector_url=`. Pass `client=` to use your own `httpx.Client`, and
 Each service also works on its own, as shown below. `Stac`, `Transactions`
 and `Raster` take `(url, *, headers=None, client=None, timeout=60.0)`.
 
-Create and delete STAC items via the [Transactions
-extension](https://github.com/stac-api-extensions/transaction):
+Write STAC items and collections via the [Transactions
+extension](https://github.com/stac-api-extensions/transaction). Items and
+collections can be a dict, a pystac object, a local path or a URL:
 
 ```python
 from eoapi_client import Transactions
 
 tx = Transactions("https://example.com/stac", headers={"Authorization": "Bearer ..."})
-created = tx.add_item("my-collection", "./item.geojson")  # local path or URL
+created = tx.add_item("my-collection", "./item.geojson")
+tx.patch_item("my-collection", created["id"], {"properties": {"title": "New"}})  # JSON merge patch
+tx.bulk_add_items("my-collection", items, method="upsert")  # chunked, 500 per request
 tx.delete_item("my-collection", created["id"])
 ```
+
+Items: `add_item`, `update_item` (PUT), `patch_item`, `delete_item`,
+`bulk_add_items`. Collections: `add_collection`, `update_collection`,
+`patch_collection`, `delete_collection` (pgstac also deletes the
+collection's items).
 
 List STAC collections (plain HTTP, so it tolerates collections that fail
 `pystac_client`'s stricter validation) and download an item's asset:

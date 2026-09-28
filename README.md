@@ -36,8 +36,9 @@ Service URLs default to eoapi-k8s's ingress paths (`/stac`, `/raster`,
 or `vector_url=`. Pass `client=` to use your own `httpx.Client`, and
 `timeout=` (default 60s) otherwise.
 
-Each service also works on its own, as shown below. `Stac`, `Transactions`
-and `Raster` take `(url, *, headers=None, client=None, timeout=60.0)`.
+Each service also works on its own, as shown below. `Stac`, `Transactions`,
+`Raster` and `VectorTiles` take
+`(url, *, headers=None, auth=None, client=None, timeout=60.0)`.
 
 Write STAC items and collections via the [Transactions
 extension](https://github.com/stac-api-extensions/transaction). Items and

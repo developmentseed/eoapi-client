@@ -45,6 +45,25 @@ raise `EoApiError` (or its subclasses `AssetNotFoundError` /
 `UnsupportedAssetSchemeError`), which carries the response's `status_code`
 when there is one.
 
+Turn a STAC search into map tiles via
+[titiler-pgstac](https://stac-utils.github.io/titiler-pgstac/)'s mosaic
+endpoints:
+
+```python
+from eoapi_client import Raster
+
+raster = Raster("https://example.com/raster", headers={"Authorization": "Bearer ..."})
+search_id = raster.register_search({"collections": ["my-collection"]})
+tile_url = raster.tile_url_template(search_id, assets="data")
+# -> "https://example.com/raster/searches/<id>/tiles/WebMercatorQuad/{z}/{x}/{y}?assets=data"
+```
+
+Extra keyword arguments (`assets`, `expression`, `rescale`,
+`colormap_name`, ...) are forwarded as query parameters to titiler. Use
+`raster.collection_tilejson(collection_id, ...)` instead when you want a
+whole collection's mosaic without registering a search first. Errors raise
+`EoApiError`.
+
 ## Development
 
 ```bash

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from eoapi_client._http import EoApiError, Service, request
+from eoapi_client._http import DEFAULT_TIMEOUT, EoApiError, Service, request
 
 MERGE_PATCH = {"Content-Type": "application/merge-patch+json"}
 
@@ -28,7 +28,7 @@ def _as_json(obj: Any) -> dict[str, Any]:
     if hasattr(obj, "to_dict"):
         return dict(obj.to_dict())
     if urlparse(str(obj)).scheme in ("http", "https"):
-        return dict(request("GET", str(obj), timeout=60.0).json())
+        return dict(request("GET", str(obj), timeout=DEFAULT_TIMEOUT).json())
     return dict(json.loads(Path(obj).read_text()))
 
 

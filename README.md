@@ -21,7 +21,9 @@ from pathlib import Path
 from eoapi_client import EoApi
 
 with EoApi("https://example.com", headers={"Authorization": "Bearer ..."}) as api:
-    api.stac.collections()
+    api.stac.collections(q="sentinel")  # all pages; search params pass through
+    for item in api.stac.iter_items("my-collection", datetime="2024-01-01T00:00:00Z/.."):
+        ...
     api.stac.get_item("my-collection", "item-1")
     api.stac.download_asset("my-collection", "item-1", "data", Path("./data.tif"))
     api.transactions.add_item("my-collection", "./item.geojson")

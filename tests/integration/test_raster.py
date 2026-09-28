@@ -20,7 +20,7 @@ def _tile(lon: float, lat: float, z: int) -> tuple[int, int]:
 
 def test_search_tile(api: EoApi, sample_item: dict[str, Any]) -> None:
     search_id = api.raster.register_search({"collections": [SAMPLE_COLLECTION]})
-    template = api.raster.tile_url_template(search_id, assets="cog")
+    template = api.raster.search(search_id).tile_url_template(assets="cog")
     minx, miny, maxx, maxy = sample_item["bbox"]
     x, y = _tile((minx + maxx) / 2, (miny + maxy) / 2, 14)
 
@@ -31,7 +31,7 @@ def test_search_tile(api: EoApi, sample_item: dict[str, Any]) -> None:
 
 
 def test_collection_tilejson(api: EoApi) -> None:
-    assert api.raster.collection_tilejson(SAMPLE_COLLECTION, assets="cog")["tiles"]
+    assert api.raster.collection(SAMPLE_COLLECTION).tilejson(assets="cog")["tiles"]
 
 
 def _centre(item: dict[str, Any]) -> tuple[float, float]:

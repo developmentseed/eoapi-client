@@ -27,7 +27,7 @@ with EoApi("https://example.com", headers={"Authorization": "Bearer ..."}) as ap
     api.stac.get_item("my-collection", "item-1")
     api.stac.download_asset("my-collection", "item-1", "data", Path("./data.tif"))
     api.transactions.add_item("my-collection", "./item.geojson")
-    api.raster.tile_url_template(api.raster.register_search({"collections": ["my-collection"]}))
+    api.raster.search(api.raster.register_search({"collections": ["my-collection"]})).tile_url_template()
     api.vector().collections()
 ```
 
@@ -82,15 +82,15 @@ from eoapi_client import Raster
 
 raster = Raster("https://example.com/raster", headers={"Authorization": "Bearer ..."})
 search_id = raster.register_search({"collections": ["my-collection"]})
-tile_url = raster.tile_url_template(search_id, assets="data")
+tile_url = raster.search(search_id).tile_url_template(assets="data")
 # -> "https://example.com/raster/searches/<id>/tiles/WebMercatorQuad/{z}/{x}/{y}?assets=data"
 ```
 
 Extra keyword arguments (`assets`, `expression`, `rescale`,
 `colormap_name`, ...) are forwarded as query parameters to titiler, and lists
-become repeated keys. Use `raster.collection_tilejson(collection_id, ...)`
-instead when you want a whole collection's mosaic without registering a
-search first.
+become repeated keys. Use `raster.collection(collection_id)` instead of
+`raster.search(search_id)` when you want a whole collection's mosaic without
+registering a search first.
 
 For analysis, `raster.item(collection_id, item_id)`,
 `raster.collection(collection_id)` and `raster.search(search_id)` share

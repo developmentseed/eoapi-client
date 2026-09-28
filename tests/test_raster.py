@@ -50,7 +50,7 @@ def test_tilejson() -> None:
         return_value=httpx.Response(200, json=TILEJSON)
     )
 
-    data = Raster(RASTER_URL).tilejson("abc123")
+    data = Raster(RASTER_URL).search("abc123").tilejson()
 
     assert data["minzoom"] == 0
     assert data["tiles"] == TILEJSON["tiles"]
@@ -62,7 +62,7 @@ def test_tilejson_passes_params() -> None:
         return_value=httpx.Response(200, json=TILEJSON)
     )
 
-    Raster(RASTER_URL).tilejson("abc123", assets="data", rescale="0,10000")
+    Raster(RASTER_URL).search("abc123").tilejson(assets="data", rescale="0,10000")
 
     request = route.calls.last.request
     assert request.url.params["assets"] == "data"
@@ -75,7 +75,7 @@ def test_tile_url_template() -> None:
         return_value=httpx.Response(200, json=TILEJSON)
     )
 
-    url = Raster(RASTER_URL).tile_url_template("abc123")
+    url = Raster(RASTER_URL).search("abc123").tile_url_template()
 
     assert url == TILEJSON["tiles"][0]
 
@@ -86,7 +86,7 @@ def test_collection_tilejson() -> None:
         return_value=httpx.Response(200, json=TILEJSON)
     )
 
-    data = Raster(RASTER_URL).collection_tilejson("my-collection")
+    data = Raster(RASTER_URL).collection("my-collection").tilejson()
 
     assert data["tiles"] == TILEJSON["tiles"]
 
@@ -98,7 +98,7 @@ def test_tilejson_error() -> None:
     )
 
     with pytest.raises(EoApiError) as exc_info:
-        Raster(RASTER_URL).tilejson("missing")
+        Raster(RASTER_URL).search("missing").tilejson()
 
     assert exc_info.value.status_code == 404
 

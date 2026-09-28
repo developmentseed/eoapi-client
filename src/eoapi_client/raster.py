@@ -98,21 +98,6 @@ class Raster(Service):
         `search_body` is a STAC search filter (`collections`, `bbox`,
         `datetime`, `query`/`filter`, ...), optionally with a nested
         `metadata` key (`assets`, `minzoom`, `maxzoom`, `defaults`, ...).
-        Returns the mosaic's `search_id`, for `search(search_id)` /
-        `tilejson()` / `tile_url_template()`.
+        Returns the mosaic's `search_id`, for `search(search_id)`.
         """
         return str(self._request("POST", "/searches/register", json=search_body).json()["id"])
-
-    def tilejson(self, search_id: str, *, tile_matrix_set: str = DEFAULT_TILE_MATRIX_SET, **params: Any) -> dict[str, Any]:
-        """Shortcut for `search(search_id).tilejson(...)`."""
-        return self.search(search_id).tilejson(tile_matrix_set=tile_matrix_set, **params)
-
-    def tile_url_template(self, search_id: str, *, tile_matrix_set: str = DEFAULT_TILE_MATRIX_SET, **params: Any) -> str:
-        """Shortcut for `search(search_id).tile_url_template(...)`."""
-        return self.search(search_id).tile_url_template(tile_matrix_set=tile_matrix_set, **params)
-
-    def collection_tilejson(
-        self, collection_id: str, *, tile_matrix_set: str = DEFAULT_TILE_MATRIX_SET, **params: Any
-    ) -> dict[str, Any]:
-        """Shortcut for `collection(collection_id).tilejson(...)`."""
-        return self.collection(collection_id).tilejson(tile_matrix_set=tile_matrix_set, **params)

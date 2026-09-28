@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from eoapi_client import EoApiError, list_collections
+from eoapi_client import EoApiConnectionError, EoApiError, list_collections
 
 STAC_URL = "https://example.com/stac"
 
@@ -38,3 +38,11 @@ def test_list_collections_error() -> None:
         list_collections(STAC_URL)
 
     assert exc_info.value.status_code == 500
+
+
+@respx.mock
+def test_list_collections_connection_error() -> None:
+    respx.get(f"{STAC_URL}/collections").mock(side_effect=httpx.ConnectError("refused"))
+
+    with pytest.raises(EoApiConnectionError):
+        list_collections(STAC_URL)

@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from eoapi_client import AssetNotFoundError, EoApiError, UnsupportedAssetSchemeError, download_asset
+from eoapi_client import AssetNotFoundError, EoApiConnectionError, EoApiError, UnsupportedAssetSchemeError, download_asset
 
 STAC_URL = "https://example.com/stac"
 ITEM_WITH_ASSET = {
@@ -92,3 +92,24 @@ def test_download_asset_unsupported_scheme() -> None:
         download_asset(STAC_URL, "coll-1", "item-1", "data", Path("out.bin"))
 
     assert route.call_count == 1
+
+
+@respx.mock
+def test_download_asset_href_error(tmp_path: Path) -> None:
+    respx.get(f"{STAC_URL}/collections/coll-1/items/item-1").mock(return_value=httpx.Response(200, json=ITEM_WITH_ASSET))
+    respx.get(f"{STAC_URL}/collections/coll-1/items/item-1/data").mock(return_value=httpx.Response(500, text="boom"))
+
+    with pytest.raises(EoApiError) as exc_info:
+        download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin")
+
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.body == "boom"
+
+
+@respx.mock
+def test_download_asset_connection_error(tmp_path: Path) -> None:
+    respx.get(f"{STAC_URL}/collections/coll-1/items/item-1").mock(return_value=httpx.Response(200, json=ITEM_WITH_ASSET))
+    respx.get(f"{STAC_URL}/collections/coll-1/items/item-1/data").mock(side_effect=httpx.ConnectError("refused"))
+
+    with pytest.raises(EoApiConnectionError):
+        download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin")

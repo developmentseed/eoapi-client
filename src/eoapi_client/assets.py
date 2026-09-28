@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from eoapi_client._http import EoApiError, get_json
+from eoapi_client._http import EoApiConnectionError, EoApiError, get_json, raise_for_response
 
 
 class AssetNotFoundError(EoApiError):
@@ -49,13 +49,15 @@ def download_asset(
         )
     asset_headers = headers if headers and parsed_href.netloc == urlparse(item_url).netloc else {}
     dest.parent.mkdir(parents=True, exist_ok=True)
-    with (
-        httpx.Client(timeout=timeout, follow_redirects=True) as client,
-        client.stream("GET", href, headers=asset_headers) as response,
-    ):
-        if not response.is_success:
-            raise EoApiError(f"GET {href} failed", status_code=response.status_code)
-        with dest.open("wb") as f:
-            for chunk in response.iter_bytes():
-                f.write(chunk)
+    try:
+        with (
+            httpx.Client(timeout=timeout, follow_redirects=True) as client,
+            client.stream("GET", href, headers=asset_headers) as response,
+        ):
+            raise_for_response(response)
+            with dest.open("wb") as f:
+                for chunk in response.iter_bytes():
+                    f.write(chunk)
+    except httpx.TransportError as exc:
+        raise EoApiConnectionError(f"GET {href} failed: {exc}", url=href, method="GET") from exc
     return dest

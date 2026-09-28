@@ -2,7 +2,7 @@
 
 from importlib.metadata import version
 
-from ._http import EoApiError
+from ._http import EoApiConnectionError, EoApiError
 from .assets import AssetNotFoundError, UnsupportedAssetSchemeError, download_asset
 from .collections import list_collections
 from .raster import Raster
@@ -13,6 +13,7 @@ __version__ = version("eoapi-client")
 
 __all__ = [
     "AssetNotFoundError",
+    "EoApiConnectionError",
     "EoApiError",
     "Raster",
     "TransactionError",

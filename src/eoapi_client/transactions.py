@@ -9,15 +9,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
+from eoapi_client._http import EoApiError, request
 
 
-class TransactionError(Exception):
+class TransactionError(EoApiError):
     """A STAC API Transactions request failed."""
-
-    def __init__(self, status_code: int, message: str) -> None:
-        self.status_code = status_code
-        super().__init__(message)
 
 
 class Transactions:
@@ -34,9 +30,7 @@ class Transactions:
     @staticmethod
     def _body(path_or_url: str) -> bytes:
         if urlparse(path_or_url).scheme in ("http", "https"):
-            response = httpx.get(path_or_url, timeout=60.0)
-            response.raise_for_status()
-            return response.content
+            return request("GET", path_or_url, timeout=60.0).content
         return Path(path_or_url).read_bytes()
 
     def add_item(self, collection: str, path_or_url: str) -> dict[str, Any]:
@@ -45,21 +39,16 @@ class Transactions:
         `path_or_url` may be a local file path or an `http(s)://` URL to the
         item body.
         """
-        url = self._url(collection)
-        with httpx.Client(headers=self._headers, timeout=60.0) as client:
-            response = client.post(
-                url,
-                content=self._body(path_or_url),
-                headers={"Content-Type": "application/geo+json"},
-            )
-        if response.status_code not in (200, 201):
-            raise TransactionError(response.status_code, response.text or f"POST {url} failed")
+        response = request(
+            "POST",
+            self._url(collection),
+            error=TransactionError,
+            content=self._body(path_or_url),
+            headers={**self._headers, "Content-Type": "application/geo+json"},
+            timeout=60.0,
+        )
         return dict(response.json())
 
     def delete_item(self, collection: str, item_id: str) -> None:
         """Delete an item via `DELETE .../items/{item_id}`."""
-        url = self._url(collection, item_id)
-        with httpx.Client(headers=self._headers, timeout=60.0) as client:
-            response = client.delete(url)
-        if response.status_code not in (200, 204):
-            raise TransactionError(response.status_code, response.text or f"DELETE {url} failed")
+        request("DELETE", self._url(collection, item_id), error=TransactionError, headers=self._headers, timeout=60.0)

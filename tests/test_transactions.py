@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from eoapi_client import TransactionError, Transactions
+from eoapi_client import EoApiConnectionError, EoApiError, TransactionError, Transactions
 
 STAC_URL = "https://example.com/stac"
 ITEM_BODY = (
@@ -73,7 +73,11 @@ def test_add_item_errors(tmp_path: Path, status: int) -> None:
     with pytest.raises(TransactionError) as exc_info:
         Transactions(STAC_URL).add_item("ws-test", str(item_file))
 
+    assert isinstance(exc_info.value, EoApiError)
     assert exc_info.value.status_code == status
+    assert exc_info.value.method == "POST"
+    assert exc_info.value.url == url
+    assert exc_info.value.body == "fail"
 
 
 @respx.mock
@@ -85,3 +89,22 @@ def test_delete_item_error() -> None:
         Transactions(STAC_URL).delete_item("ws-test", "missing")
 
     assert exc_info.value.status_code == 404
+
+
+@respx.mock
+def test_add_item_body_url_error() -> None:
+    body_url = "https://example.com/missing.geojson"
+    respx.get(body_url).mock(return_value=httpx.Response(404, text="not found"))
+
+    with pytest.raises(EoApiError) as exc_info:
+        Transactions(STAC_URL).add_item("ws-test", body_url)
+
+    assert exc_info.value.status_code == 404
+
+
+@respx.mock
+def test_delete_item_connection_error() -> None:
+    respx.delete(f"{STAC_URL}/collections/ws-test/items/x").mock(side_effect=httpx.ConnectError("refused"))
+
+    with pytest.raises(EoApiConnectionError):
+        Transactions(STAC_URL).delete_item("ws-test", "x")

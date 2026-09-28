@@ -53,11 +53,13 @@ uv run pre-commit run --all-files          # ruff check + format, hooks, pytest
 ```
 
 - Every behaviour change gets a respx test in the matching `tests/test_*.py`.
-- Real-server checks: an eoapi-k8s deployment (`../k8s`, local cluster via
-  `kubectl`) is served at `http://localhost` (`/stac`, `/raster`, `/vector`,
-  `/multidim`). Writes to `/stac` need a token from the mock OIDC server:
-  `POST http://localhost/mock-oidc/` with `username=...`. Clean up anything
-  you create. Don't modify the cluster or the `../k8s` repo unless asked.
+- Every feature also gets an integration test in `tests/integration/`, in the
+  same change. They run against a live eoapi-k8s deployment (`../k8s`, local
+  cluster via `kubectl`, served at `http://localhost`) and are skipped unless
+  `EOAPI_URL` is set:
+  `EOAPI_URL=http://localhost uv run pytest tests/integration`. Fixtures
+  provide a mock-OIDC token and clean up what they create. Don't modify the
+  cluster or the `../k8s` repo unless asked.
 
 ## Commits
 

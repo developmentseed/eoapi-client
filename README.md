@@ -121,6 +121,14 @@ uv run pytest
 uv run pre-commit install
 ```
 
+Integration tests run against a live
+[eoapi-k8s](https://github.com/developmentseed/eoapi-k8s) deployment (with its
+mock OIDC server and sample data) and are skipped unless `EOAPI_URL` is set:
+
+```bash
+EOAPI_URL=http://localhost uv run pytest tests/integration
+```
+
 ## License
 
 [MIT](LICENSE)

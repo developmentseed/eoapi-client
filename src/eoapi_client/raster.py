@@ -53,10 +53,8 @@ class _Target:
 
     def statistics(self, feature: dict[str, Any] | None = None, **params: Any) -> dict[str, Any]:
         """Statistics within a GeoJSON `feature` (POST), or of a whole item (GET, items only)."""
-        if feature is None:
-            return dict(self._get("/statistics", **params).json())
-        path = f"{self._prefix}/statistics"
-        return dict(self._raster._request("POST", path, json=feature, params=params).json())
+        method = "GET" if feature is None else "POST"
+        return dict(self._raster._request(method, f"{self._prefix}/statistics", json=feature, params=params).json())
 
     def bbox(
         self,

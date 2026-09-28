@@ -127,6 +127,18 @@ items = features.collection_items("my-collection", **{"filter": "ogc_fid = 3", "
 its docs for the full API (`collection_item()`, `collection_queryables()`,
 item writes, ...). OWSLib raises its own errors; see [Errors](#errors).
 
+tipg's vector tiles (MVT), which OWSLib doesn't cover, come from
+`VectorTiles` (or `api.vector_tiles`), with no extra needed:
+
+```python
+from eoapi_client import VectorTiles
+
+vt = VectorTiles("https://example.com/vector")
+vt.tile_url_template("public.my_data")  # for a MapLibre vector source
+vt.style_json("public.my_data")  # a ready-made MapLibre style
+vt.tile("public.my_data", 0, 0, 0)  # MVT bytes; empty where there are no features
+```
+
 ## Auth
 
 Pass `auth=` to `EoApi` (or any service) to have tokens fetched, cached

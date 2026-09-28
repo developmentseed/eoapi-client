@@ -18,6 +18,7 @@ vector = [
 
 [dependency-groups]
 dev = [
+    "mypy>=2.3.1",
     "owslib>=0.30",
     "pre-commit",
     "pytest>=8",
@@ -34,3 +35,11 @@ line-length = 125
 
 [tool.ruff.lint]
 extend-select = ["I", "E", "F", "W"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["owslib.*"]
+ignore_missing_imports = true

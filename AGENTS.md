@@ -49,7 +49,7 @@ Rules for AI agents working in this repo. Follow them literally.
 ```bash
 uv sync
 uv run pytest                              # unit tests (respx, offline)
-uv run pre-commit run --all-files          # ruff check + format, hooks, pytest
+uv run pre-commit run --all-files          # ruff check + format, hooks, mypy, pytest
 ```
 
 - Every behaviour change gets a respx test in the matching `tests/test_*.py`.

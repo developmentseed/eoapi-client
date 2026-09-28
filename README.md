@@ -27,6 +27,24 @@ tx.delete_item("my-collection", created["id"])
 Non-2xx responses raise `TransactionError`, which carries the response's
 `status_code`.
 
+List STAC collections (plain HTTP, so it tolerates collections that fail
+`pystac_client`'s stricter validation) and download an item's asset:
+
+```python
+from pathlib import Path
+from eoapi_client import list_collections, download_asset
+
+collections = list_collections("https://example.com/stac", headers={"Authorization": "Bearer ..."})
+download_asset("https://example.com/stac", "my-collection", "item-1", "data", Path("./data.tif"))
+```
+
+`download_asset` only forwards the given headers to the asset href when it
+shares the STAC API's host — asset hrefs often point elsewhere (object
+storage, a CDN) that shouldn't receive the STAC API's bearer token. Errors
+raise `EoApiError` (or its subclasses `AssetNotFoundError` /
+`UnsupportedAssetSchemeError`), which carries the response's `status_code`
+when there is one.
+
 ## Development
 
 ```bash

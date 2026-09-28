@@ -2,8 +2,20 @@
 
 from importlib.metadata import version
 
+from ._http import EoApiError
+from .assets import AssetNotFoundError, UnsupportedAssetSchemeError, download_asset
+from .collections import list_collections
 from .transactions import TransactionError, Transactions
 
 __version__ = version("eoapi-client")
 
-__all__ = ["TransactionError", "Transactions", "__version__"]
+__all__ = [
+    "AssetNotFoundError",
+    "EoApiError",
+    "TransactionError",
+    "Transactions",
+    "UnsupportedAssetSchemeError",
+    "__version__",
+    "download_asset",
+    "list_collections",
+]

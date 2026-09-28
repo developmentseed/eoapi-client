@@ -2,6 +2,7 @@
 name = "eoapi-client"
 version = "0.0.0"
 description = "Python client for eoAPI"
+readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Development Seed" }]

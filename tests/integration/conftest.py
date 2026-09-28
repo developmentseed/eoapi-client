@@ -49,10 +49,9 @@ def api(eoapi_url: str, auth: dict[str, str]) -> Iterator[EoApi]:
 
 
 @pytest.fixture(scope="session")
-def sample_item(eoapi_url: str) -> dict[str, Any]:
+def sample_item(api: EoApi) -> dict[str, Any]:
     """The first sample item with assets (eoapi-k8s's own auth tests leave asset-less `test-*` items)."""
-    items = httpx.get(f"{eoapi_url}/stac/collections/{SAMPLE_COLLECTION}/items", params={"limit": 50}).json()
-    return next(item for item in items["features"] if item["assets"])
+    return next(item for item in api.stac.iter_items(SAMPLE_COLLECTION, limit=50) if item["assets"])
 
 
 @pytest.fixture

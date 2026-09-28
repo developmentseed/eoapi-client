@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import httpx
 
-from eoapi_client._http import DEFAULT_TIMEOUT, EoApiConnectionError, EoApiError, Service, new_client, raise_for_response
+from eoapi_client._http import (
+    DEFAULT_TIMEOUT,
+    EoApiConnectionError,
+    EoApiError,
+    Service,
+    new_client,
+    raise_for_response,
+    request,
+)
 
 
 class AssetNotFoundError(EoApiError):
@@ -22,13 +31,35 @@ class UnsupportedAssetSchemeError(EoApiError):
 class Stac(Service):
     """Read collections and items from a STAC API and download assets."""
 
-    def collections(self) -> list[dict[str, Any]]:
-        """Fetch `.../collections` and return the raw collection objects.
+    def _pages(self, path: str, key: str, params: dict[str, Any] | None) -> Iterator[dict[str, Any]]:
+        """Yield `data[key]` entries across pages, following `rel="next"` links."""
+        url: str | None = f"{self._url}{path}"
+        seen: set[str] = set()
+        while url and url not in seen:
+            seen.add(url)
+            data = request("GET", url, client=self._client, headers=self._headers, params=params).json()
+            yield from data.get(key) or []
+            url = next((link["href"] for link in data.get("links") or [] if link.get("rel") == "next"), None)
+            params = None  # the next href already carries them; `{}` would make httpx drop its query
+
+    def iter_collections(self, **params: Any) -> Iterator[dict[str, Any]]:
+        """Yield the raw collection objects of `.../collections`, across all pages.
 
         Plain HTTP, so it tolerates collections that fail `pystac_client`'s
-        stricter validation (`matches_object_type`).
+        stricter validation (`matches_object_type`). Extra keyword arguments
+        (`limit`, `q`, `bbox`, `datetime`, `filter`, `sortby`, ...) are passed
+        through as query parameters; use `**{"filter-lang": ...}` for names
+        that aren't valid identifiers.
         """
-        return list(self._request("GET", "/collections").json().get("collections") or [])
+        return self._pages("/collections", "collections", params)
+
+    def collections(self, **params: Any) -> list[dict[str, Any]]:
+        """`list(iter_collections(**params))`."""
+        return list(self.iter_collections(**params))
+
+    def iter_items(self, collection: str, **params: Any) -> Iterator[dict[str, Any]]:
+        """Yield a collection's items across all pages; params as for `iter_collections`."""
+        return self._pages(f"/collections/{collection}/items", "features", params)
 
     def get_item(self, collection: str, item_id: str) -> dict[str, Any]:
         return dict(self._request("GET", f"/collections/{collection}/items/{item_id}").json())

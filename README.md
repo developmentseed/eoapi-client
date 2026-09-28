@@ -87,9 +87,26 @@ tile_url = raster.tile_url_template(search_id, assets="data")
 ```
 
 Extra keyword arguments (`assets`, `expression`, `rescale`,
-`colormap_name`, ...) are forwarded as query parameters to titiler. Use
-`raster.collection_tilejson(collection_id, ...)` instead when you want a
-whole collection's mosaic without registering a search first.
+`colormap_name`, ...) are forwarded as query parameters to titiler, and lists
+become repeated keys. Use `raster.collection_tilejson(collection_id, ...)`
+instead when you want a whole collection's mosaic without registering a
+search first.
+
+For analysis, `raster.item(collection_id, item_id)`,
+`raster.collection(collection_id)` and `raster.search(search_id)` share
+`info`, `tilejson`, `tile_url_template`, `point`, `statistics` and `bbox`.
+Items also have `preview`:
+
+```python
+item = raster.item("my-collection", "item-1")
+item.info(assets="data")
+png = item.preview(assets="data", max_size=512)  # bytes
+item.point(-86.39, 36.21, assets="data")["values"]
+item.statistics(assets="data")  # whole item
+raster.collection("my-collection").statistics(feature, assets="data", max_size=512)  # within a GeoJSON feature
+```
+
+Image methods return `None` when titiler has no data there (HTTP 204).
 
 Query vector collections (tipg's OGC API - Features) via
 [OWSLib](https://owslib.readthedocs.io/en/latest/usage.html#ogc-api-features)

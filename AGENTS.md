@@ -22,8 +22,9 @@ Rules for AI agents working in this repo. Follow them literally.
 
 | Path | What |
 |---|---|
-| `src/eoapi_client/_http.py` | Shared HTTP helpers and `EoApiError` |
-| `src/eoapi_client/collections.py`, `assets.py` | STAC reads |
+| `src/eoapi_client/_http.py` | `EoApiError`, `request`, `new_client`, and the `Service` base class every service extends |
+| `src/eoapi_client/api.py` | `EoApi`: all services of one deployment on one shared client |
+| `src/eoapi_client/stac.py` | STAC reads (`Stac`, plus `list_collections` / `download_asset` shortcuts) |
 | `src/eoapi_client/transactions.py` | STAC Transactions (writes, behind stac-auth-proxy) |
 | `src/eoapi_client/raster.py` | titiler-pgstac |
 | `src/eoapi_client/vector.py` | tipg, via OWSLib (optional `vector` extra) |

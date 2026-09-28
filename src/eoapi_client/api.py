@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
@@ -43,7 +43,7 @@ class EoApi(ClientOwner):
         self._auth = auth
         self._vector_url = vector_url or f"{base}/vector"
         stac_url = stac_url or f"{base}/stac"
-        kwargs = {"client": self._client, "headers": headers, "auth": auth}
+        kwargs: dict[str, Any] = {"client": self._client, "headers": headers, "auth": auth}
         self.stac = Stac(stac_url, **kwargs)
         self.transactions = Transactions(stac_url, **kwargs)
         self.raster = Raster(raster_url or f"{base}/raster", **kwargs)

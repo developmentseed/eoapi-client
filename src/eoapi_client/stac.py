@@ -90,7 +90,7 @@ class Stac(Service):
         client = self._client if same_host else new_client(self._client.timeout)
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
-            kwargs = {"headers": self._headers, "auth": self._auth} if same_host else {}
+            kwargs: dict[str, Any] = {"headers": self._headers, "auth": self._auth} if same_host else {}
             with client.stream("GET", href, **kwargs) as response:
                 raise_for_response(response)
                 with dest.open("wb") as f:

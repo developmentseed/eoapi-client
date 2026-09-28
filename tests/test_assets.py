@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from eoapi_client import AssetNotFoundError, EoApiConnectionError, EoApiError, UnsupportedAssetSchemeError, download_asset
+from eoapi_client import AssetNotFoundError, EoApiConnectionError, EoApiError, Stac, UnsupportedAssetSchemeError
 
 STAC_URL = "https://example.com/stac"
 ITEM_WITH_ASSET = {
@@ -26,7 +26,7 @@ def test_download_asset(tmp_path: Path) -> None:
     )
 
     dest = tmp_path / "out" / "asset.bin"
-    path = download_asset(STAC_URL, "coll-1", "item-1", "data", dest, headers={"Authorization": "Bearer token"})
+    path = Stac(STAC_URL, headers={"Authorization": "Bearer token"}).download_asset("coll-1", "item-1", "data", dest)
 
     assert path == dest
     assert dest.read_bytes() == b"asset-bytes"
@@ -37,7 +37,7 @@ def test_download_asset_unknown_key() -> None:
     respx.get(f"{STAC_URL}/collections/coll-1/items/item-1").mock(return_value=httpx.Response(200, json=ITEM_WITH_ASSET))
 
     with pytest.raises(AssetNotFoundError, match="missing"):
-        download_asset(STAC_URL, "coll-1", "item-1", "missing", Path("out.bin"))
+        Stac(STAC_URL).download_asset("coll-1", "item-1", "missing", Path("out.bin"))
 
 
 @respx.mock
@@ -45,7 +45,7 @@ def test_download_asset_item_not_found() -> None:
     respx.get(f"{STAC_URL}/collections/coll-1/items/item-1").mock(return_value=httpx.Response(404, text="not found"))
 
     with pytest.raises(EoApiError) as exc_info:
-        download_asset(STAC_URL, "coll-1", "item-1", "data", Path("out.bin"))
+        Stac(STAC_URL).download_asset("coll-1", "item-1", "data", Path("out.bin"))
 
     assert exc_info.value.status_code == 404
 
@@ -62,7 +62,9 @@ def test_download_asset_strips_bearer_cross_host(tmp_path: Path) -> None:
         return_value=httpx.Response(200, content=b"asset-bytes")
     )
 
-    download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin", headers={"Authorization": "Bearer token"})
+    Stac(STAC_URL, headers={"Authorization": "Bearer token"}).download_asset(
+        "coll-1", "item-1", "data", tmp_path / "out.bin"
+    )
 
     assert "Authorization" not in asset_route.calls.last.request.headers
 
@@ -74,7 +76,9 @@ def test_download_asset_forwards_bearer_same_host(tmp_path: Path) -> None:
         return_value=httpx.Response(200, content=b"asset-bytes")
     )
 
-    download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin", headers={"Authorization": "Bearer token"})
+    Stac(STAC_URL, headers={"Authorization": "Bearer token"}).download_asset(
+        "coll-1", "item-1", "data", tmp_path / "out.bin"
+    )
 
     assert asset_route.calls.last.request.headers["Authorization"] == "Bearer token"
 
@@ -89,7 +93,7 @@ def test_download_asset_unsupported_scheme() -> None:
     route = respx.get(f"{STAC_URL}/collections/coll-1/items/item-1").mock(return_value=httpx.Response(200, json=item))
 
     with pytest.raises(UnsupportedAssetSchemeError, match="unsupported scheme"):
-        download_asset(STAC_URL, "coll-1", "item-1", "data", Path("out.bin"))
+        Stac(STAC_URL).download_asset("coll-1", "item-1", "data", Path("out.bin"))
 
     assert route.call_count == 1
 
@@ -100,7 +104,7 @@ def test_download_asset_href_error(tmp_path: Path) -> None:
     respx.get(f"{STAC_URL}/collections/coll-1/items/item-1/data").mock(return_value=httpx.Response(500, text="boom"))
 
     with pytest.raises(EoApiError) as exc_info:
-        download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin")
+        Stac(STAC_URL).download_asset("coll-1", "item-1", "data", tmp_path / "out.bin")
 
     assert exc_info.value.status_code == 500
     assert exc_info.value.body == "boom"
@@ -112,4 +116,4 @@ def test_download_asset_connection_error(tmp_path: Path) -> None:
     respx.get(f"{STAC_URL}/collections/coll-1/items/item-1/data").mock(side_effect=httpx.ConnectError("refused"))
 
     with pytest.raises(EoApiConnectionError):
-        download_asset(STAC_URL, "coll-1", "item-1", "data", tmp_path / "out.bin")
+        Stac(STAC_URL).download_asset("coll-1", "item-1", "data", tmp_path / "out.bin")

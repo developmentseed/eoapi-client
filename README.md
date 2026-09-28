@@ -63,10 +63,11 @@ List STAC collections (plain HTTP, so it tolerates collections that fail
 
 ```python
 from pathlib import Path
-from eoapi_client import list_collections, download_asset
+from eoapi_client import Stac
 
-collections = list_collections("https://example.com/stac", headers={"Authorization": "Bearer ..."})
-download_asset("https://example.com/stac", "my-collection", "item-1", "data", Path("./data.tif"))
+with Stac("https://example.com/stac", headers={"Authorization": "Bearer ..."}) as stac:
+    collections = stac.collections()
+    stac.download_asset("my-collection", "item-1", "data", Path("./data.tif"))
 ```
 
 `download_asset` only forwards the given headers to the asset href when it
@@ -173,7 +174,7 @@ Every failure raised by eoapi-client is an `EoApiError`:
   (the response text).
   - `EoApiConnectionError`: no response (DNS, connection refused, timeout).
   - `TransactionError`: a Transactions request failed.
-  - `AssetNotFoundError` / `UnsupportedAssetSchemeError`: from `download_asset`.
+  - `AssetNotFoundError` / `UnsupportedAssetSchemeError`: from `Stac.download_asset`.
 
 The exception is `open_features()`: OWSLib raises a plain `RuntimeError` on
 non-2xx responses, with no status code attached.

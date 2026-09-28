@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from eoapi_client import EoApiConnectionError, EoApiError, Stac, list_collections
+from eoapi_client import EoApiConnectionError, EoApiError, Stac
 
 STAC_URL = "https://example.com/stac"
 
@@ -19,7 +19,7 @@ def test_list_collections() -> None:
         return_value=httpx.Response(200, json={"collections": [{"id": "coll-1"}, {"id": "coll-2"}]})
     )
 
-    collections = list_collections(STAC_URL, headers={"Authorization": "Bearer token"})
+    collections = Stac(STAC_URL, headers={"Authorization": "Bearer token"}).collections()
 
     assert [c["id"] for c in collections] == ["coll-1", "coll-2"]
     assert respx.calls.last.request.headers["Authorization"] == "Bearer token"
@@ -29,7 +29,7 @@ def test_list_collections() -> None:
 def test_list_collections_empty() -> None:
     respx.get(f"{STAC_URL}/collections").mock(return_value=httpx.Response(200, json={}))
 
-    assert list_collections(STAC_URL) == []
+    assert Stac(STAC_URL).collections() == []
 
 
 @respx.mock
@@ -37,7 +37,7 @@ def test_list_collections_error() -> None:
     respx.get(f"{STAC_URL}/collections").mock(return_value=httpx.Response(500, text="boom"))
 
     with pytest.raises(EoApiError) as exc_info:
-        list_collections(STAC_URL)
+        Stac(STAC_URL).collections()
 
     assert exc_info.value.status_code == 500
 
@@ -47,7 +47,7 @@ def test_list_collections_connection_error() -> None:
     respx.get(f"{STAC_URL}/collections").mock(side_effect=httpx.ConnectError("refused"))
 
     with pytest.raises(EoApiConnectionError):
-        list_collections(STAC_URL)
+        Stac(STAC_URL).collections()
 
 
 def _page(key: str, ids: list[str], next_href: str | None = None) -> httpx.Response:

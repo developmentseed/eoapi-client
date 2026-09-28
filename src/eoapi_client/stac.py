@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 import httpx
 
 from eoapi_client._http import (
-    DEFAULT_TIMEOUT,
     EoApiConnectionError,
     EoApiError,
     Service,
@@ -103,26 +102,3 @@ class Stac(Service):
             if not same_host:
                 client.close()
         return dest
-
-
-def list_collections(
-    stac_url: str, *, headers: dict[str, str] | None = None, timeout: float = DEFAULT_TIMEOUT
-) -> list[dict[str, Any]]:
-    """Shortcut for `Stac(stac_url, ...).collections()`."""
-    with Stac(stac_url, headers=headers, timeout=timeout) as stac:
-        return stac.collections()
-
-
-def download_asset(
-    stac_url: str,
-    collection: str,
-    item_id: str,
-    asset_key: str,
-    dest: Path,
-    *,
-    headers: dict[str, str] | None = None,
-    timeout: float = DEFAULT_TIMEOUT,
-) -> Path:
-    """Shortcut for `Stac(stac_url, ...).download_asset(...)`."""
-    with Stac(stac_url, headers=headers, timeout=timeout) as stac:
-        return stac.download_asset(collection, item_id, asset_key, dest)

@@ -110,6 +110,32 @@ items = features.collection_items("my-collection", **{"filter": "ogc_fid = 3", "
 its docs for the full API (`collection_item()`, `collection_queryables()`,
 item writes, ...). OWSLib raises its own errors; see [Errors](#errors).
 
+## Auth
+
+Pass `auth=` to `EoApi` (or any service) to have tokens fetched, cached
+until shortly before they expire, and refetched once on a 401:
+
+```python
+from eoapi_client import EoApi, client_credentials_auth, mock_oidc_auth
+
+# Keycloak (or any OAuth2 client-credentials token endpoint)
+auth = client_credentials_auth(
+    "https://keycloak.example.com/realms/eoapi/protocol/openid-connect/token",
+    client_id="ingest",
+    client_secret="...",
+)
+# eoapi-k8s's mock OIDC server, for testing
+auth = mock_oidc_auth("http://localhost/mock-oidc")
+
+api = EoApi("https://example.com", auth=auth)
+```
+
+`TokenAuth(fetch)` wraps any other token source: `fetch()` returns a token
+string, and its expiry is read from the JWT's `exp` claim. For a static token,
+keep using `headers={"Authorization": "Bearer ..."}`. Tokens are only sent to
+the configured service URLs, never to asset hosts elsewhere. `api.vector()`
+gets the token current at call time, because OWSLib only takes static headers.
+
 ## Errors
 
 Every failure raised by eoapi-client is an `EoApiError`:

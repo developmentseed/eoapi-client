@@ -7,12 +7,15 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Development Seed" }]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.0",
+]
 
 [dependency-groups]
 dev = [
     "pre-commit",
     "pytest>=8",
+    "respx>=0.22.0",
     "ruff",
 ]
 

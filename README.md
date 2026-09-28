@@ -13,6 +13,30 @@ uv add eoapi-client
 
 ## Usage
 
+`EoApi` bundles all services of one deployment behind one shared HTTP
+client (connection reuse, redirects, connection retries):
+
+```python
+from pathlib import Path
+from eoapi_client import EoApi
+
+with EoApi("https://example.com", headers={"Authorization": "Bearer ..."}) as api:
+    api.stac.collections()
+    api.stac.get_item("my-collection", "item-1")
+    api.stac.download_asset("my-collection", "item-1", "data", Path("./data.tif"))
+    api.transactions.add_item("my-collection", "./item.geojson")
+    api.raster.tile_url_template(api.raster.register_search({"collections": ["my-collection"]}))
+    api.vector().collections()
+```
+
+Service URLs default to eoapi-k8s's ingress paths (`/stac`, `/raster`,
+`/vector`) under the base URL; override any with `stac_url=`, `raster_url=`
+or `vector_url=`. Pass `client=` to use your own `httpx.Client`, and
+`timeout=` (default 60s) otherwise.
+
+Each service also works on its own, as shown below. `Stac`, `Transactions`
+and `Raster` take `(url, *, headers=None, client=None, timeout=60.0)`.
+
 Create and delete STAC items via the [Transactions
 extension](https://github.com/stac-api-extensions/transaction):
 

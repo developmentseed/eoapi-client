@@ -7,17 +7,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from eoapi_client._http import get_json, post_json
+from eoapi_client._http import Service
 
 DEFAULT_TILE_MATRIX_SET = "WebMercatorQuad"
 
 
-class Raster:
+class Raster(Service):
     """Register STAC searches as tile mosaics and fetch their TileJSON/tile URLs."""
-
-    def __init__(self, raster_url: str, *, headers: dict[str, str] | None = None) -> None:
-        self._raster_url = raster_url.rstrip("/")
-        self._headers = headers or {}
 
     def register_search(self, search_body: dict[str, Any]) -> str:
         """Register a STAC search as a mosaic via `POST /searches/register`.
@@ -28,9 +24,7 @@ class Raster:
         Returns the mosaic's `search_id`, to pass to `tilejson()` /
         `tile_url_template()`.
         """
-        url = f"{self._raster_url}/searches/register"
-        data = post_json(url, json=search_body, headers=self._headers, timeout=30.0)
-        return str(data["id"])
+        return str(self._request("POST", "/searches/register", json=search_body).json()["id"])
 
     def tilejson(
         self,
@@ -45,8 +39,7 @@ class Raster:
         keyword arguments (`assets`, `expression`, `rescale`,
         `colormap_name`, ...) are passed through as query parameters.
         """
-        url = f"{self._raster_url}/searches/{search_id}/{tile_matrix_set}/tilejson.json"
-        return dict(get_json(url, headers=self._headers, params=params, timeout=30.0))
+        return dict(self._request("GET", f"/searches/{search_id}/{tile_matrix_set}/tilejson.json", params=params).json())
 
     def tile_url_template(
         self,
@@ -74,5 +67,5 @@ class Raster:
 
         `GET /collections/{collection_id}/{tile_matrix_set}/tilejson.json`.
         """
-        url = f"{self._raster_url}/collections/{collection_id}/{tile_matrix_set}/tilejson.json"
-        return dict(get_json(url, headers=self._headers, params=params, timeout=30.0))
+        path = f"/collections/{collection_id}/{tile_matrix_set}/tilejson.json"
+        return dict(self._request("GET", path, params=params).json())

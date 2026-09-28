@@ -1,0 +1,65 @@
+name: Integration tests
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/integration.yml"
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  integration:
+    name: Integration tests against eoapi-k8s
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/checkout@v7
+        with:
+          repository: developmentseed/eoapi-k8s
+          ref: main
+          path: k8s
+
+      - name: Free disk space
+        run: |
+          docker system prune -af --volumes || true
+          sudo apt-get clean || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.18.3
+
+      - uses: jupyterhub/action-k3s-helm@v4
+        with:
+          k3s-channel: latest
+          metrics-enabled: true
+          docker-enabled: true
+
+      - name: Deploy eoAPI
+        working-directory: k8s
+        run: |
+          ./eoapi-cli cluster wait-ready
+          ./eoapi-cli deployment run --profile k3d
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - run: uv sync
+
+      - name: Run integration tests
+        run: uv run pytest tests/integration -v
+        env:
+          EOAPI_URL: http://localhost
+
+      - name: Debug failed deployment
+        if: failure()
+        working-directory: k8s
+        run: ./eoapi-cli deployment debug

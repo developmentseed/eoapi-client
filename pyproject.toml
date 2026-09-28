@@ -11,8 +11,14 @@ dependencies = [
     "httpx>=0.28.0",
 ]
 
+[project.optional-dependencies]
+vector = [
+    "owslib>=0.30",
+]
+
 [dependency-groups]
 dev = [
+    "owslib>=0.30",
     "pre-commit",
     "pytest>=8",
     "respx>=0.22.0",

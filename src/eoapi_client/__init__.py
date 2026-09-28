@@ -7,6 +7,7 @@ from .assets import AssetNotFoundError, UnsupportedAssetSchemeError, download_as
 from .collections import list_collections
 from .raster import Raster
 from .transactions import TransactionError, Transactions
+from .vector import open_features
 
 __version__ = version("eoapi-client")
 
@@ -20,4 +21,5 @@ __all__ = [
     "__version__",
     "download_asset",
     "list_collections",
+    "open_features",
 ]

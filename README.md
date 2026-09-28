@@ -64,6 +64,26 @@ Extra keyword arguments (`assets`, `expression`, `rescale`,
 whole collection's mosaic without registering a search first. Errors raise
 `EoApiError`.
 
+Query vector collections (tipg's OGC API - Features) via
+[OWSLib](https://owslib.readthedocs.io/en/latest/usage.html#ogc-api-features)
+— tipg's `/collections`, `/collections/{id}/items`, and CQL2 filtering are
+already well covered there, so this only wires up eoAPI's URL/header
+conventions instead of reimplementing a features client. Requires the
+`vector` extra: `uv add eoapi-client[vector]`.
+
+```python
+from eoapi_client import open_features
+
+features = open_features("https://example.com/vector", headers={"Authorization": "Bearer ..."})
+collections = features.collections()
+items = features.collection_items("my-collection", **{"filter": "ogc_fid = 3", "filter-lang": "cql2-text"})
+```
+
+`open_features()` returns a plain `owslib.ogcapi.features.Features` — see
+its docs for the full API (`collection_item()`, `collection_queryables()`,
+item writes, ...). Note OWSLib itself raises a plain `RuntimeError` on
+non-2xx responses, with no structured status code attached.
+
 ## Development
 
 ```bash

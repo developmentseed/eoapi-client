@@ -11,7 +11,7 @@ from eoapi_client.auth import TokenAuth
 from eoapi_client.raster import Raster
 from eoapi_client.stac import Stac
 from eoapi_client.transactions import Transactions
-from eoapi_client.vector import open_features
+from eoapi_client.vector import VectorTiles, open_features
 
 if TYPE_CHECKING:
     from owslib.ogcapi.features import Features
@@ -47,6 +47,7 @@ class EoApi(ClientOwner):
         self.stac = Stac(stac_url, **kwargs)
         self.transactions = Transactions(stac_url, **kwargs)
         self.raster = Raster(raster_url or f"{base}/raster", **kwargs)
+        self.vector_tiles = VectorTiles(self._vector_url, **kwargs)
 
     def vector(self) -> Features:
         """Open an OWSLib `Features` client (see `open_features`); it doesn't share this client.

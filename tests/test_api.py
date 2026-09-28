@@ -17,12 +17,16 @@ AUTH = {"Authorization": "Bearer token"}
 def test_default_service_urls() -> None:
     stac = respx.get(f"{BASE_URL}/stac/collections").mock(return_value=httpx.Response(200, json={"collections": []}))
     raster = respx.post(f"{BASE_URL}/raster/searches/register").mock(return_value=httpx.Response(200, json={"id": "abc"}))
+    vector = respx.get(f"{BASE_URL}/vector/collections/t/tiles/WebMercatorQuad/style.json").mock(
+        return_value=httpx.Response(200, json={})
+    )
 
     with EoApi(f"{BASE_URL}/") as api:
         api.stac.collections()
         api.raster.register_search({})
+        api.vector_tiles.style_json("t")
 
-    assert stac.called and raster.called
+    assert stac.called and raster.called and vector.called
     assert stac.calls.last.request.headers["User-Agent"] == f"eoapi-client/{__version__}"
 
 

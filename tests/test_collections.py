@@ -92,3 +92,10 @@ def test_iter_items_follows_next() -> None:
     respx.get(items_url).mock(return_value=_page("features", ["i1", "i2"], f"{items_url}?token=t"))
 
     assert [i["id"] for i in Stac(STAC_URL).iter_items("coll-1")] == ["i1", "i2", "i3"]
+
+
+@respx.mock
+def test_get_collection() -> None:
+    respx.get(f"{STAC_URL}/collections/coll-1").mock(return_value=httpx.Response(200, json={"id": "coll-1"}))
+
+    assert Stac(STAC_URL).get_collection("coll-1") == {"id": "coll-1"}

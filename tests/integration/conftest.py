@@ -24,6 +24,22 @@ if not os.getenv("EOAPI_URL"):
 SAMPLE_COLLECTION = "noaa-emergency-response"
 
 
+def unique_id() -> str:
+    return f"eoapi-client-it-{uuid.uuid4().hex[:8]}"
+
+
+def new_collection_body(collection_id: str) -> dict[str, Any]:
+    return {
+        "type": "Collection",
+        "stac_version": "1.0.0",
+        "id": collection_id,
+        "description": "eoapi-client test",
+        "license": "proprietary",
+        "extent": {"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [[None, None]]}},
+        "links": [],
+    }
+
+
 @pytest.fixture(scope="session")
 def eoapi_url() -> str:
     return os.environ["EOAPI_URL"].rstrip("/")
@@ -57,7 +73,7 @@ def sample_item(api: EoApi) -> dict[str, Any]:
 @pytest.fixture
 def new_item(api: EoApi, sample_item: dict[str, Any], tmp_path: Path) -> Iterator[Path]:
     """A copy of the sample item under a unique id, as a JSON file; deleted afterwards."""
-    item = {**sample_item, "id": f"eoapi-client-it-{uuid.uuid4().hex[:8]}", "links": []}
+    item = {**sample_item, "id": unique_id(), "links": []}
     path = tmp_path / "item.json"
     path.write_text(json.dumps(item))
     yield path

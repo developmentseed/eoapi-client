@@ -61,6 +61,9 @@ class Stac(Service):
         """Yield a collection's items across all pages; params as for `iter_collections`."""
         return self._pages(f"/collections/{collection}/items", "features", params)
 
+    def get_collection(self, collection_id: str) -> dict[str, Any]:
+        return dict(self._request("GET", f"/collections/{collection_id}").json())
+
     def get_item(self, collection: str, item_id: str) -> dict[str, Any]:
         return dict(self._request("GET", f"/collections/{collection}/items/{item_id}").json())
 

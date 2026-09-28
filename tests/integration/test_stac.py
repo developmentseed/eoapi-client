@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
 from typing import Any
 
-import httpx
 import pytest
 
 from eoapi_client import EoApi
 
-from .conftest import SAMPLE_COLLECTION
+from .conftest import SAMPLE_COLLECTION, new_collection_body, unique_id
 
 
 def test_collections(api: EoApi) -> None:
@@ -31,24 +29,14 @@ def test_download_asset(api: EoApi, sample_item: dict[str, Any], tmp_path: Path)
 
 
 @pytest.fixture
-def extra_collections(eoapi_url: str, auth: dict[str, str]) -> Iterator[list[str]]:
+def extra_collections(api: EoApi) -> Iterator[list[str]]:
     """Two temporary collections, so `/collections` has more than one page at `limit=1`."""
-    ids = [f"eoapi-client-it-{uuid.uuid4().hex[:8]}" for _ in range(2)]
-    extent = {"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [[None, None]]}}
+    ids = [unique_id() for _ in range(2)]
     for collection_id in ids:
-        body = {
-            "type": "Collection",
-            "stac_version": "1.0.0",
-            "id": collection_id,
-            "description": "eoapi-client test",
-            "license": "proprietary",
-            "extent": extent,
-            "links": [],
-        }
-        httpx.post(f"{eoapi_url}/stac/collections", json=body, headers=auth).raise_for_status()
+        api.transactions.add_collection(new_collection_body(collection_id))
     yield ids
     for collection_id in ids:
-        httpx.delete(f"{eoapi_url}/stac/collections/{collection_id}", headers=auth)
+        api.transactions.delete_collection(collection_id)
 
 
 def test_collections_pagination(api: EoApi, extra_collections: list[str]) -> None:

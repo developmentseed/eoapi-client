@@ -16,6 +16,7 @@ uv add eoapi-client
 ```bash
 uv sync
 uv run pytest
+uv run pre-commit install
 ```
 
 ## License

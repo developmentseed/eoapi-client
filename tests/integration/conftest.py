@@ -13,10 +13,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-import httpx
 import pytest
 
-from eoapi_client import EoApi, EoApiError
+from eoapi_client import EoApi, EoApiError, TokenAuth, mock_oidc_auth
 
 if not os.getenv("EOAPI_URL"):
     collect_ignore_glob = ["test_*.py"]
@@ -46,21 +45,14 @@ def eoapi_url() -> str:
 
 
 @pytest.fixture(scope="session")
-def auth(eoapi_url: str) -> dict[str, str]:
-    """A bearer token from eoapi-k8s's mock OIDC server."""
-    oidc_url = os.getenv("MOCK_OIDC_URL", f"{eoapi_url}/mock-oidc")
-    response = httpx.post(
-        f"{oidc_url}/",
-        data={"username": "eoapi-client-it", "scopes": "openid"},
-        headers={"Accept": "application/json"},
-    )
-    response.raise_for_status()
-    return {"Authorization": f"Bearer {response.json()['token']}"}
+def auth(eoapi_url: str) -> TokenAuth:
+    """Tokens from eoapi-k8s's mock OIDC server."""
+    return mock_oidc_auth(os.getenv("MOCK_OIDC_URL", f"{eoapi_url}/mock-oidc"), username="eoapi-client-it")
 
 
 @pytest.fixture(scope="session")
-def api(eoapi_url: str, auth: dict[str, str]) -> Iterator[EoApi]:
-    with EoApi(eoapi_url, headers=auth) as api:
+def api(eoapi_url: str, auth: TokenAuth) -> Iterator[EoApi]:
+    with EoApi(eoapi_url, auth=auth) as api:
         yield api
 
 

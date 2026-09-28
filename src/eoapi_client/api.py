@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 from eoapi_client._http import DEFAULT_TIMEOUT, ClientOwner
+from eoapi_client.auth import TokenAuth
 from eoapi_client.raster import Raster
 from eoapi_client.stac import Stac
 from eoapi_client.transactions import Transactions
@@ -29,6 +30,7 @@ class EoApi(ClientOwner):
         base_url: str,
         *,
         headers: dict[str, str] | None = None,
+        auth: httpx.Auth | None = None,
         timeout: float = DEFAULT_TIMEOUT,
         client: httpx.Client | None = None,
         stac_url: str | None = None,
@@ -38,12 +40,21 @@ class EoApi(ClientOwner):
         super().__init__(client, timeout)
         base = base_url.rstrip("/")
         self._headers = headers or {}
+        self._auth = auth
         self._vector_url = vector_url or f"{base}/vector"
         stac_url = stac_url or f"{base}/stac"
-        self.stac = Stac(stac_url, client=self._client, headers=headers)
-        self.transactions = Transactions(stac_url, client=self._client, headers=headers)
-        self.raster = Raster(raster_url or f"{base}/raster", client=self._client, headers=headers)
+        kwargs = {"client": self._client, "headers": headers, "auth": auth}
+        self.stac = Stac(stac_url, **kwargs)
+        self.transactions = Transactions(stac_url, **kwargs)
+        self.raster = Raster(raster_url or f"{base}/raster", **kwargs)
 
     def vector(self) -> Features:
-        """Open an OWSLib `Features` client (see `open_features`); it doesn't share this client."""
-        return open_features(self._vector_url, headers=self._headers)
+        """Open an OWSLib `Features` client (see `open_features`); it doesn't share this client.
+
+        OWSLib only takes static headers: a `TokenAuth`'s current token is
+        added now, so a long-lived `Features` object won't refresh it.
+        """
+        headers = dict(self._headers)
+        if isinstance(self._auth, TokenAuth):
+            headers["Authorization"] = f"Bearer {self._auth.token()}"
+        return open_features(self._vector_url, headers=headers)

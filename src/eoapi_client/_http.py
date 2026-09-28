@@ -92,7 +92,7 @@ class ClientOwner:
 
 
 class Service(ClientOwner):
-    """Base for one eoAPI service. Headers are sent per request, not as client defaults."""
+    """Base for one eoAPI service. Headers and auth are sent per request, not as client defaults."""
 
     def __init__(
         self,
@@ -100,12 +100,15 @@ class Service(ClientOwner):
         *,
         client: httpx.Client | None = None,
         headers: dict[str, str] | None = None,
+        auth: httpx.Auth | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         super().__init__(client, timeout)
         self._url = url.rstrip("/")
         self._headers = headers or {}
+        self._auth = auth
 
     def _request(self, method: str, path: str, *, error: type[EoApiError] = EoApiError, **kwargs: Any) -> httpx.Response:
         headers = {**self._headers, **kwargs.pop("headers", {})}
-        return request(method, f"{self._url}{path}", client=self._client, error=error, headers=headers, **kwargs)
+        url = f"{self._url}{path}"
+        return request(method, url, client=self._client, error=error, headers=headers, auth=self._auth, **kwargs)

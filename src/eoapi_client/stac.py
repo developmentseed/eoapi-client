@@ -37,7 +37,7 @@ class Stac(Service):
         seen: set[str] = set()
         while url and url not in seen:
             seen.add(url)
-            data = request("GET", url, client=self._client, headers=self._headers, params=params).json()
+            data = request("GET", url, client=self._client, headers=self._headers, auth=self._auth, params=params).json()
             yield from data.get(key) or []
             url = next((link["href"] for link in data.get("links") or [] if link.get("rel") == "next"), None)
             params = None  # the next href already carries them; `{}` would make httpx drop its query
@@ -91,7 +91,8 @@ class Stac(Service):
         client = self._client if same_host else new_client(self._client.timeout)
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with client.stream("GET", href, headers=self._headers if same_host else {}) as response:
+            kwargs = {"headers": self._headers, "auth": self._auth} if same_host else {}
+            with client.stream("GET", href, **kwargs) as response:
                 raise_for_response(response)
                 with dest.open("wb") as f:
                     for chunk in response.iter_bytes():
